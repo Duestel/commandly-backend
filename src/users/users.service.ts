@@ -1,15 +1,26 @@
 import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { CreateUserInput } from './dto/create-user.input';
 import { UpdateUserInput } from './dto/update-user.input';
+import { User } from './entities/user.entity';
+import { CommonService } from '@app/common';
 
 @Injectable()
 export class UsersService {
-  create(createUserInput: CreateUserInput) {
-    return 'This action adds a new user';
+  constructor(
+    @InjectModel(User.name) private userModel: Model<User>,
+    private readonly commonService: CommonService,
+  ) {}
+
+  async create({ password, ...rest }: CreateUserInput) {
+    const hashPassword = await this.commonService.hashPassword(password);
+
+    return this.userModel.create({ ...rest, password: hashPassword });
   }
 
   findAll() {
-    return [{ email: 'rafeeq' }];
+    return this.userModel.find().lean(true);
   }
 
   findOne(id: number) {
